@@ -2,37 +2,42 @@ import { ValidationError } from 'yup'
 
 import { ErrorMessages, SchemaValidationInterface } from './schema-validation-interface'
 
-const defaultValidateOptions = { abortEarly: false }
-
 export const validatePayload = async ({
   schemaValidator,
   payload,
-  validationKeys,
+  propertiesToValidate,
 }: {
   schemaValidator: SchemaValidationInterface
-  validationKeys: string[]
   payload: any
+  propertiesToValidate: string[]
 }) => {
-  for (const validationKey of validationKeys) {
-    const currentSchemaValidator = schemaValidator[validationKey]
+  const errors = {}
 
-    currentSchemaValidator &&
-      currentSchemaValidator.schema &&
-      (await currentSchemaValidator.schema.validate(payload[validationKey], {
-        ...defaultValidateOptions,
-        ...currentSchemaValidator.validateOptions,
-      }))
+  for (const propertyToValidate of propertiesToValidate) {
+    const propertySchema = schemaValidator[propertyToValidate]
+
+    try {
+      await propertySchema?.schema.validate(payload[propertyToValidate], propertySchema.validateOptions)
+    } catch (yupValidationError) {
+      errors[propertyToValidate] = buildErrorPayload({
+        yupValidationError,
+        errorMessages: schemaValidator.errorMessages,
+      })
+    }
   }
+
+  return errors
 }
 
-export const buildErrorPayload = ({
+const buildErrorPayload = ({
   errorMessages,
-  validationError,
+  yupValidationError,
 }: {
   errorMessages: ErrorMessages
-  validationError: ValidationError
+  yupValidationError: ValidationError
 }) => {
-  const errors = validationError.inner && validationError.inner.length > 0 ? validationError.inner : [validationError]
+  const errors =
+    yupValidationError.inner && yupValidationError.inner.length > 0 ? yupValidationError.inner : [yupValidationError]
 
   return errors.reduce((errorsAccumulator, { path: propertyPath, message }: ValidationError) => {
     if (errorsAccumulator.find(({ propertyPath: accPropertyPath }) => accPropertyPath === propertyPath)) {

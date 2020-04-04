@@ -12,7 +12,7 @@ const createAppWithPath = ({ path, middleware }) => {
   return app
 }
 
-describe('yup middleware', () => {
+describe('express yup middleware', () => {
   it('creates an express middleware', () => {
     const expressMiddleware = yupMiddleware({ schemaValidator: {} })
 
@@ -54,12 +54,14 @@ describe('yup middleware', () => {
         const response = await agent.get('/test').expect(400)
 
         expect(response.body).toStrictEqual({
-          errors: [
-            {
-              ...customErrorMessages.requiredTestQueryParam,
-              propertyPath: 'testQueryParam',
-            },
-          ],
+          errors: {
+            query: [
+              {
+                ...customErrorMessages.requiredTestQueryParam,
+                propertyPath: 'testQueryParam',
+              },
+            ],
+          },
         })
       })
     })

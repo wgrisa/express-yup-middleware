@@ -2,27 +2,28 @@ import { NextFunction, Request, Response } from 'express'
 import { BAD_REQUEST } from 'http-status-codes'
 
 import { SchemaValidationInterface } from './schema-validation-interface'
-import { buildErrorPayload, validatePayload } from './schema-validator'
+import { validatePayload } from './schema-validator'
 
-const validationKeys = ['params', 'body', 'query']
+const defaultPropertiesToValidate = ['params', 'body', 'query']
 
 export const yupMiddleware = ({
   schemaValidator,
-  statusCode,
+  expectedStatusCode,
+  propertiesToValidate = defaultPropertiesToValidate,
 }: {
   schemaValidator: SchemaValidationInterface
-  statusCode?: number
+  expectedStatusCode?: number
+  propertiesToValidate?: string[]
 }) => async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    await validatePayload({ schemaValidator, payload: req, validationKeys })
+  const errors = await validatePayload({
+    schemaValidator,
+    payload: req,
+    propertiesToValidate,
+  })
 
+  if (!Object.keys(errors).length) {
     return next()
-  } catch (validationError) {
-    return res.status(statusCode || BAD_REQUEST).send({
-      errors: buildErrorPayload({
-        errorMessages: schemaValidator.errorMessages,
-        validationError,
-      }),
-    })
   }
+
+  return res.status(expectedStatusCode || BAD_REQUEST).send({ errors })
 }
