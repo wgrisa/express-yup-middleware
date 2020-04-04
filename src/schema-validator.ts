@@ -26,7 +26,7 @@ export const validatePayload = async ({
     }
   }
 
-  return errors
+  return Object.keys(errors).length ? errors : null
 }
 
 const buildErrorPayload = ({

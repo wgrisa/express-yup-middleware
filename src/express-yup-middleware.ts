@@ -21,7 +21,7 @@ export const expressYupMiddleware = ({
     propertiesToValidate,
   })
 
-  if (!Object.keys(errors).length) {
+  if (!errors) {
     return next()
   }
 
