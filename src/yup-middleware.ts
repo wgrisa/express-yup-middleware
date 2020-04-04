@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from 'express'
 import { BAD_REQUEST } from 'http-status-codes'
-import { ValidationError } from 'yup'
 
-import { ErrorMessages, SchemaValidationInterface } from './schema-validation-interface'
+import { SchemaValidationInterface } from './schema-validation-interface'
+import { buildErrorPayload, validatePayload } from './schema-validator'
 
-const defaultValidateOptions = { abortEarly: false }
+const validationKeys = ['params', 'body', 'query']
 
 export const yupMiddleware = ({
   schemaValidator,
@@ -14,7 +14,7 @@ export const yupMiddleware = ({
   statusCode?: number
 }) => async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await validatePayload({ schemaValidator, payload: req })
+    await validatePayload({ schemaValidator, payload: req, validationKeys })
 
     return next()
   } catch (validationError) {
@@ -25,46 +25,4 @@ export const yupMiddleware = ({
       }),
     })
   }
-}
-
-const validatePayload = async ({
-  schemaValidator,
-  payload,
-}: {
-  schemaValidator: SchemaValidationInterface
-  payload: any
-}) => {
-  const validationKeys = ['params', 'body', 'query']
-
-  for (const validationKey of validationKeys) {
-    const currentSchemaValidator = schemaValidator[validationKey]
-
-    currentSchemaValidator &&
-      currentSchemaValidator.schema &&
-      (await currentSchemaValidator.schema.validate(payload[validationKey], {
-        ...defaultValidateOptions,
-        ...currentSchemaValidator.validateOptions,
-      }))
-  }
-}
-
-const buildErrorPayload = ({
-  errorMessages,
-  validationError,
-}: {
-  errorMessages: ErrorMessages
-  validationError: ValidationError
-}) => {
-  const errors = validationError.inner && validationError.inner.length > 0 ? validationError.inner : [validationError]
-
-  return errors.reduce((errorsAccumulator, { path: propertyPath, message }: ValidationError) => {
-    if (errorsAccumulator.find(({ propertyPath: accPropertyPath }) => accPropertyPath === propertyPath)) {
-      return errorsAccumulator
-    }
-
-    return errorsAccumulator.concat({
-      ...errorMessages[message],
-      propertyPath,
-    })
-  }, [])
 }
