@@ -17,7 +17,7 @@ describe('express yup middleware', () => {
   let agent = null
 
   it('creates an express middleware', () => {
-    const expressMiddleware = expressYupMiddleware({ schemaValidator: {} })
+    const expressMiddleware = expressYupMiddleware({ schemaValidator: { schema: {} } })
 
     expect(typeof expressMiddleware).toBe('function')
   })
@@ -133,12 +133,6 @@ describe('express yup middleware', () => {
           }),
         },
       },
-      errorMessages: {
-        requiredHeaderProperty: {
-          key: 'required-header-property',
-          message: 'The "testHeaderProperty" property is required!',
-        },
-      },
     }
 
     beforeEach(() => {
@@ -157,8 +151,44 @@ describe('express yup middleware', () => {
         errors: {
           headers: [
             {
-              ...schemaValidator.errorMessages.requiredHeaderProperty,
+              message: 'requiredHeaderProperty',
               propertyPath: 'testHeaderProperty',
+            },
+          ],
+        },
+      })
+    })
+  })
+
+  describe('when returning a custom validation code', () => {
+    const schemaValidator: ExpressYupMiddlewareInterface = {
+      schema: {
+        body: {
+          yupSchema: Yup.object().shape({
+            testProperty: Yup.string().required('required'),
+          }),
+        },
+      },
+    }
+
+    beforeEach(() => {
+      const app = createAppWithPath({
+        path: '/test',
+        middleware: expressYupMiddleware({ schemaValidator, expectedStatusCode: 418 }),
+      })
+
+      agent = request(app)
+    })
+
+    it(`returns "I'm a teapot" code 418`, async () => {
+      const { body } = await agent.get('/test').expect(418)
+
+      expect(body).toStrictEqual({
+        errors: {
+          body: [
+            {
+              message: 'required',
+              propertyPath: 'testProperty',
             },
           ],
         },
