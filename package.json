@@ -1,8 +1,7 @@
 {
   "name": "express-yup-middleware",
   "version": "1.0.0",
-  "description": "Express middleware to validate Yup schemas.",
-  "main": "index.js",
+  "description": "express-yup-middleware is an express middleware that uses Yup schemas to validate a request and return a response with errors.",
   "scripts": {
     "test": "jest",
     "test-watch": "jest --watchAll"
