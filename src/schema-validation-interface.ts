@@ -1,15 +1,10 @@
 import { ObjectSchema, ValidateOptions } from 'yup'
 
-export interface SchemaValidator {
-  schema: ObjectSchema
-  validateOptions?: ValidateOptions
-}
-
-export interface SchemaValidationInterface {
-  body?: SchemaValidator
-  params?: SchemaValidator
-  query?: SchemaValidator
-  errorMessages?: ErrorMessages
+interface SchemaValidationInterface {
+  [key: string]: {
+    yupSchema: ObjectSchema
+    validateOptions?: ValidateOptions
+  }
 }
 
 export interface ErrorMessages {
@@ -17,4 +12,9 @@ export interface ErrorMessages {
     key: string
     message: string
   }
+}
+
+export interface ExpressYupMiddlewareInterface {
+  schema: SchemaValidationInterface
+  errorMessages?: ErrorMessages
 }

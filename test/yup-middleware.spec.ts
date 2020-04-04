@@ -3,7 +3,7 @@ import request from 'supertest'
 import * as Yup from 'yup'
 
 import { expressYupMiddleware } from '../src/express-yup-middleware'
-import { SchemaValidationInterface } from '../src/schema-validation-interface'
+import { ExpressYupMiddlewareInterface } from '../src/schema-validation-interface'
 
 const createAppWithPath = ({ path, middleware }) => {
   const app = express()
@@ -14,6 +14,8 @@ const createAppWithPath = ({ path, middleware }) => {
 }
 
 describe('express yup middleware', () => {
+  let agent = null
+
   it('creates an express middleware', () => {
     const expressMiddleware = expressYupMiddleware({ schemaValidator: {} })
 
@@ -21,24 +23,24 @@ describe('express yup middleware', () => {
   })
 
   describe('when validating the request query, body and params properties', () => {
-    let agent = null
-
     describe('without custom error messages', () => {
-      const schemaValidator: SchemaValidationInterface = {
-        query: {
-          schema: Yup.object().shape({
-            testQueryParam: Yup.string().required('requiredTestQueryParam'),
-          }),
-        },
-        body: {
-          schema: Yup.object().shape({
-            testBodyProperty: Yup.string().required('requiredTestBodyProperty'),
-          }),
-        },
-        params: {
-          schema: Yup.object().shape({
-            testParams: Yup.string().required('requiredTestParams'),
-          }),
+      const schemaValidator: ExpressYupMiddlewareInterface = {
+        schema: {
+          query: {
+            yupSchema: Yup.object().shape({
+              testQueryParam: Yup.string().required('requiredTestQueryParam'),
+            }),
+          },
+          body: {
+            yupSchema: Yup.object().shape({
+              testBodyProperty: Yup.string().required('requiredTestBodyProperty'),
+            }),
+          },
+          params: {
+            yupSchema: Yup.object().shape({
+              testParams: Yup.string().required('requiredTestParams'),
+            }),
+          },
         },
       }
 
@@ -80,11 +82,13 @@ describe('express yup middleware', () => {
     })
 
     describe('using custom error messages', () => {
-      const schemaValidator: SchemaValidationInterface = {
-        body: {
-          schema: Yup.object().shape({
-            testBodyProperty: Yup.string().required('requiredTestBodyProperty'),
-          }),
+      const schemaValidator: ExpressYupMiddlewareInterface = {
+        schema: {
+          body: {
+            yupSchema: Yup.object().shape({
+              testBodyProperty: Yup.string().required('requiredTestBodyProperty'),
+            }),
+          },
         },
         errorMessages: {
           requiredTestBodyProperty: {
@@ -116,6 +120,48 @@ describe('express yup middleware', () => {
             ],
           },
         })
+      })
+    })
+  })
+
+  describe('when validating a custom request property', () => {
+    const schemaValidator: ExpressYupMiddlewareInterface = {
+      schema: {
+        headers: {
+          yupSchema: Yup.object().shape({
+            testHeaderProperty: Yup.string().required('requiredHeaderProperty'),
+          }),
+        },
+      },
+      errorMessages: {
+        requiredHeaderProperty: {
+          key: 'required-header-property',
+          message: 'The "testHeaderProperty" property is required!',
+        },
+      },
+    }
+
+    beforeEach(() => {
+      const app = createAppWithPath({
+        path: '/test',
+        middleware: expressYupMiddleware({ schemaValidator, propertiesToValidate: ['headers'] }),
+      })
+
+      agent = request(app)
+    })
+
+    it('returns a bad request error showing yup validation messages', async () => {
+      const { body } = await agent.get('/test').expect(400)
+
+      expect(body).toStrictEqual({
+        errors: {
+          headers: [
+            {
+              ...schemaValidator.errorMessages.requiredHeaderProperty,
+              propertyPath: 'testHeaderProperty',
+            },
+          ],
+        },
       })
     })
   })
