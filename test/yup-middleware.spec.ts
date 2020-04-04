@@ -2,6 +2,7 @@ import express from 'express'
 import request from 'supertest'
 import * as Yup from 'yup'
 
+import { SchemaValidationInterface } from '../src/schema-validation-interface'
 import { yupMiddleware } from '../src/yup-middleware'
 
 const createAppWithPath = ({ path, middleware }) => {
@@ -22,29 +23,19 @@ describe('express yup middleware', () => {
   describe('when validating', () => {
     let agent = null
 
-    describe('the request query', () => {
-      const yupSchema = {
-        schema: Yup.object().shape({
-          testQueryParam: Yup.number().required('requiredTestQueryParam'),
-        }),
-      }
-
-      const customErrorMessages = {
-        requiredTestQueryParam: {
-          key: 'requiredTestQueryParam',
-          message: 'The query param "testQueryParam" is required!',
+    describe('only the request query params', () => {
+      const querySchemaValidator: SchemaValidationInterface = {
+        query: {
+          schema: Yup.object().shape({
+            testQueryParam: Yup.number().required('requiredTestQueryParam'),
+          }),
         },
-      }
-
-      const schemaValidator = {
-        query: yupSchema,
-        errorMessages: customErrorMessages,
       }
 
       beforeEach(() => {
         const app = createAppWithPath({
           path: '/test',
-          middleware: yupMiddleware({ schemaValidator }),
+          middleware: yupMiddleware({ schemaValidator: querySchemaValidator }),
         })
 
         agent = request(app)
@@ -57,7 +48,7 @@ describe('express yup middleware', () => {
           errors: {
             query: [
               {
-                ...customErrorMessages.requiredTestQueryParam,
+                message: 'requiredTestQueryParam',
                 propertyPath: 'testQueryParam',
               },
             ],

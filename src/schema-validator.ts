@@ -36,17 +36,22 @@ const buildErrorPayload = ({
   errorMessages: ErrorMessages
   yupValidationError: ValidationError
 }) => {
-  const errors =
+  const yupValidationResultErrors =
     yupValidationError.inner && yupValidationError.inner.length > 0 ? yupValidationError.inner : [yupValidationError]
 
-  return errors.reduce((errorsAccumulator, { path: propertyPath, message }: ValidationError) => {
-    if (errorsAccumulator.find(({ propertyPath: accPropertyPath }) => accPropertyPath === propertyPath)) {
-      return errorsAccumulator
-    }
+  return yupValidationResultErrors.reduce(
+    (errorsResult, { path: propertyPath, message: yupErrorMessage }: ValidationError) => {
+      if (errorsResult.find(({ propertyPath: accPropertyPath }) => accPropertyPath === propertyPath)) {
+        return errorsResult
+      }
 
-    return errorsAccumulator.concat({
-      ...errorMessages[message],
-      propertyPath,
-    })
-  }, [])
+      const errorMessage = errorMessages ? errorMessages[yupErrorMessage] : { message: yupErrorMessage }
+
+      return errorsResult.concat({
+        ...errorMessage,
+        propertyPath,
+      })
+    },
+    [],
+  )
 }
