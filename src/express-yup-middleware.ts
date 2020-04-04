@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import { BAD_REQUEST } from 'http-status-codes'
 
-import { SchemaValidationInterface } from './schema-validation-interface'
+import { ExpressYupMiddlewareInterface } from './schema-validation-interface'
 import { validatePayload } from './schema-validator'
 
 const defaultPropertiesToValidate = ['params', 'body', 'query']
@@ -11,7 +11,7 @@ export const expressYupMiddleware = ({
   expectedStatusCode,
   propertiesToValidate = defaultPropertiesToValidate,
 }: {
-  schemaValidator: SchemaValidationInterface
+  schemaValidator: ExpressYupMiddlewareInterface
   expectedStatusCode?: number
   propertiesToValidate?: string[]
 }) => async (req: Request, res: Response, next: NextFunction) => {
