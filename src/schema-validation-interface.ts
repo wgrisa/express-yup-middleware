@@ -13,5 +13,8 @@ export interface SchemaValidationInterface {
 }
 
 export interface ErrorMessages {
-  [key: string]: any
+  [key: string]: {
+    key: string
+    message: string
+  }
 }

@@ -6,7 +6,7 @@ import { validatePayload } from './schema-validator'
 
 const defaultPropertiesToValidate = ['params', 'body', 'query']
 
-export const yupMiddleware = ({
+export const expressYupMiddleware = ({
   schemaValidator,
   expectedStatusCode,
   propertiesToValidate = defaultPropertiesToValidate,
