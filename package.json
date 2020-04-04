@@ -6,6 +6,10 @@
     "test": "jest",
     "test-watch": "jest --watchAll"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wgrisa/express-yup-middleware"
+  },
   "author": "William Grisa",
   "license": "MIT",
   "dependencies": {
