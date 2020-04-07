@@ -1,15 +1,17 @@
 {
   "name": "express-yup-middleware",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "express-yup-middleware is an express middleware that uses Yup schemas to validate a request and return a response with errors.",
   "scripts": {
     "test": "jest",
-    "test-watch": "jest --watchAll"
+    "test-watch": "jest --watchAll",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/wgrisa/express-yup-middleware"
   },
+  "main": "dist/src/index.js",
   "author": "William Grisa",
   "license": "MIT",
   "dependencies": {
