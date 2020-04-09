@@ -1,5 +1,7 @@
 # express-yup-middleware
 
+[![npm version](https://badge.fury.io/js/express-yup-middleware.svg)](https://badge.fury.io/js/express-yup-middleware)
+
 express-yup-middleware is an express middleware that uses Yup schemas to validate a request and return a response with errors.
 
 ## Basic schema validation
