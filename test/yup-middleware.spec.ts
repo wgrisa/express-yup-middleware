@@ -1,3 +1,4 @@
+import bodyParser from 'body-parser'
 import express from 'express'
 import request from 'supertest'
 import * as Yup from 'yup'
@@ -5,10 +6,12 @@ import * as Yup from 'yup'
 import { expressYupMiddleware } from '../src/express-yup-middleware'
 import { ExpressYupMiddlewareInterface } from '../src/schema-validation-interface'
 
-const createAppWithPath = ({ path, middleware }) => {
+const createAppWithPath = ({ path, middleware, method = 'get' }) => {
   const app = express()
 
-  app.use(path, middleware)
+  app.use(bodyParser.json())
+
+  app[method](path, middleware, (req, res) => res.sendStatus(200))
 
   return app
 }
@@ -189,6 +192,127 @@ describe('express yup middleware', () => {
             {
               message: 'required',
               propertyPath: 'testProperty',
+            },
+          ],
+        },
+      })
+    })
+  })
+
+  describe('when using the request as an Yup context to cross validate', () => {
+    const shouldBeOfTypeAccoringTo = (source) =>
+      function shouldBeEven(this: Yup.TestContext, numberToValidate: any) {
+        const mod = numberToValidate % 2
+        const type = this.options.context['req'][source].type
+
+        if (!type) {
+          return false
+        }
+
+        if (type === 'even') return mod === 0
+        if (type === 'odd') return mod !== 0
+
+        return false
+      }
+
+    it('returns a bad request error using a query value within a param validation', async () => {
+      const schemaValidator: ExpressYupMiddlewareInterface = {
+        schema: {
+          params: {
+            yupSchema: Yup.object().shape({
+              numberToValidate: Yup.string().test({
+                message: 'Check if your number correspond with the type given',
+                test: shouldBeOfTypeAccoringTo('query'),
+              }),
+            }),
+          },
+        },
+      }
+
+      const app = createAppWithPath({
+        path: '/test/:numberToValidate',
+        middleware: expressYupMiddleware({ schemaValidator }),
+      })
+
+      agent = request(app)
+
+      const { body } = await agent.get('/test/1?type=even').expect(400)
+      await agent.get('/test/1?type=odd').expect(200)
+      await agent.get('/test/2?type=even').expect(200)
+
+      expect(body).toStrictEqual({
+        errors: {
+          params: [
+            {
+              propertyPath: 'numberToValidate',
+              message: 'Check if your number correspond with the type given',
+            },
+          ],
+        },
+      })
+    })
+
+    it('returns a bad request error using a param value within a body validation', async () => {
+      const schemaValidator: ExpressYupMiddlewareInterface = {
+        schema: {
+          body: {
+            yupSchema: Yup.object().shape({
+              numberToValidate: Yup.string().test({
+                message: 'Check if your number correspond with the type given',
+                test(this: Yup.TestContext, numberToValidate: any) {
+                  const mod = numberToValidate % 2
+                  const type = this.options.context['req'].params.type
+
+                  if (!type) {
+                    return false
+                  }
+
+                  if (type === 'even') return mod === 0
+                  if (type === 'odd') return mod !== 0
+
+                  return false
+                },
+              }),
+            }),
+          },
+        },
+      }
+
+      const app = createAppWithPath({
+        path: '/test/:type',
+        method: 'post',
+        middleware: expressYupMiddleware({ schemaValidator }),
+      })
+
+      agent = request(app)
+
+      const { body } = await agent
+        .post('/test/even')
+        .send({
+          numberToValidate: 1,
+        })
+        .expect(400)
+
+      await agent
+        .post('/test/odd')
+        .send({
+          numberToValidate: 1,
+        })
+        .expect(200)
+
+      await agent
+        .post('/test/even')
+        .send({
+          numberToValidate: 2,
+        })
+        .expect(200)
+
+      expect(body).toStrictEqual({
+        errors: {
+          body: [
+            {
+              propertyPath: 'numberToValidate',
+              message: 'Check if your number correspond with the type given',
             },
           ],
         },

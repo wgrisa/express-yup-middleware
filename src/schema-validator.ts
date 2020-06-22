@@ -17,7 +17,13 @@ export const validatePayload = async ({
     const propertySchema = schemaValidator.schema[propertyToValidate]
 
     try {
-      await propertySchema?.yupSchema.validate(payload[propertyToValidate], propertySchema.validateOptions)
+      await propertySchema?.yupSchema.validate(payload[propertyToValidate], {
+        ...propertySchema.validateOptions,
+        context: {
+          req: payload,
+          ...propertySchema.validateOptions?.context,
+        },
+      })
     } catch (yupValidationError) {
       errors[propertyToValidate] = buildErrorPayload({
         yupValidationError,
