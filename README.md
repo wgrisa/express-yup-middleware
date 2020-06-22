@@ -95,6 +95,40 @@ const schemaValidator = {
 }
 ```
 
+## Validating using cross properties (body, params or query)
+
+The middleware puts the req in the context. Therefore it's possible to use the other properties to validate. Remember that to make use of `this` it's necessary to use a function (not an arrow one).
+
+```ts
+const schemaValidator = {
+  schema: {
+    body: {
+      yupSchema: Yup.object().shape({
+        numberToValidate: Yup.string().test({
+          message: 'Check if your number correspond with the type given',
+          test(this: Yup.TestContext, numberToValidate: any) {
+            const mod = numberToValidate % 2
+            // As you can see in the next line, the req is passed to the context
+            const type = this.options.context['req'].params.type
+
+            if (!type) {
+              return false
+            }
+
+            if (type === 'even') return mod === 0
+            if (type === 'odd') return mod !== 0
+
+            return false
+          },
+        }),
+      }),
+    },
+  },
+}
+
+app.post('/test/:type', expressYupMiddleware({ schemaValidator }))
+```
+
 ## Validating a custom property in the request
 
 The middleware default properties checked in the `req` (Express request) are body, params and query. If you want to validate anything else, you need to use the following option.
