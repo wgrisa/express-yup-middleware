@@ -95,9 +95,9 @@ const schemaValidator = {
 }
 ```
 
-## Validating using cross properties (body, params or query)
+## Cross-validation using any properties from your payload
 
-The middleware puts the req in the context. Therefore it's possible to use the other properties to validate. Remember that to make use of `this` it's necessary to use a function (not an arrow one).
+You can cross-validate properties of your payload using a custom Yup test and accessing them by calling `this.options.context`.
 
 ```ts
 const schemaValidator = {
@@ -105,7 +105,7 @@ const schemaValidator = {
     body: {
       yupSchema: Yup.object().shape({
         numberToValidate: Yup.string().test({
-          message: 'Check if your number correspond with the type given',
+          message: 'Check if your number corresponds with the given type',
           test(this: Yup.TestContext, numberToValidate: any) {
             const mod = numberToValidate % 2
             // As you can see in the next line, the req is passed to the context
@@ -115,8 +115,13 @@ const schemaValidator = {
               return false
             }
 
-            if (type === 'even') return mod === 0
-            if (type === 'odd') return mod !== 0
+            if (type === 'even') {
+              return mod === 0
+            }
+
+            if (type === 'odd') {
+              return mod !== 0
+            }
 
             return false
           },

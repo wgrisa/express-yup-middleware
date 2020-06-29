@@ -252,13 +252,13 @@ describe('express yup middleware', () => {
       })
     })
 
-    it('returns a bad request error using a param value within a body validation', async () => {
+    it('returns a bad request error when the number sent in the payload does not match the type param', async () => {
       const schemaValidator: ExpressYupMiddlewareInterface = {
         schema: {
           body: {
             yupSchema: Yup.object().shape({
               numberToValidate: Yup.string().test({
-                message: 'Check if your number correspond with the type given',
+                message: 'Check if your number corresponds with the given type',
                 test(this: Yup.TestContext, numberToValidate: any) {
                   const mod = numberToValidate % 2
                   const type = this.options.context['req'].params.type
@@ -267,8 +267,12 @@ describe('express yup middleware', () => {
                     return false
                   }
 
-                  if (type === 'even') return mod === 0
-                  if (type === 'odd') return mod !== 0
+                  if (type === 'even') {
+                    return mod === 0
+                  }
+                  if (type === 'odd') {
+                    return mod !== 0
+                  }
 
                   return false
                 },
@@ -312,7 +316,7 @@ describe('express yup middleware', () => {
           body: [
             {
               propertyPath: 'numberToValidate',
-              message: 'Check if your number correspond with the type given',
+              message: 'Check if your number corresponds with the given type',
             },
           ],
         },
