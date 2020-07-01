@@ -20,7 +20,7 @@ export const validatePayload = async ({
       await propertySchema?.yupSchema.validate(payload[propertyToValidate], {
         ...propertySchema.validateOptions,
         context: {
-          req: payload,
+          payload,
           ...propertySchema.validateOptions?.context,
         },
       })

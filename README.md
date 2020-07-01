@@ -109,7 +109,7 @@ const schemaValidator = {
           test(this: Yup.TestContext, numberToValidate: any) {
             const mod = numberToValidate % 2
             // As you can see in the next line, the req is passed to the context
-            const type = this.options.context['req'].params.type
+            const type = this.options.context['payload'].params.type
 
             if (!type) {
               return false

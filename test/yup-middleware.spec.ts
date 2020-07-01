@@ -203,7 +203,7 @@ describe('express yup middleware', () => {
     const shouldBeOfTypeAccoringTo = (source) =>
       function shouldBeEven(this: Yup.TestContext, numberToValidate: any) {
         const mod = numberToValidate % 2
-        const type = this.options.context['req'][source].type
+        const type = this.options.context['payload'][source].type
 
         if (!type) {
           return false
@@ -261,7 +261,7 @@ describe('express yup middleware', () => {
                 message: 'Check if your number corresponds with the given type',
                 test(this: Yup.TestContext, numberToValidate: any) {
                   const mod = numberToValidate % 2
-                  const type = this.options.context['req'].params.type
+                  const type = this.options.context['payload'].params.type
 
                   if (!type) {
                     return false
