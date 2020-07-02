@@ -95,6 +95,45 @@ const schemaValidator = {
 }
 ```
 
+## Cross-validation using any properties from your payload
+
+You can cross-validate properties of your payload using a custom Yup test and accessing them by calling `this.options.context`.
+
+```ts
+const schemaValidator = {
+  schema: {
+    body: {
+      yupSchema: Yup.object().shape({
+        numberToValidate: Yup.string().test({
+          message: 'Check if your number corresponds with the given type',
+          test(this: Yup.TestContext, numberToValidate: any) {
+            const mod = numberToValidate % 2
+            // As you can see in the next line, the req is passed to the context
+            const type = this.options.context['payload'].params.type
+
+            if (!type) {
+              return false
+            }
+
+            if (type === 'even') {
+              return mod === 0
+            }
+
+            if (type === 'odd') {
+              return mod !== 0
+            }
+
+            return false
+          },
+        }),
+      }),
+    },
+  },
+}
+
+app.post('/test/:type', expressYupMiddleware({ schemaValidator }))
+```
+
 ## Validating a custom property in the request
 
 The middleware default properties checked in the `req` (Express request) are body, params and query. If you want to validate anything else, you need to use the following option.
