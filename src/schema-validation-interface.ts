@@ -1,8 +1,8 @@
-import { ObjectSchema, ValidateOptions } from 'yup'
+import { Shape, ValidateOptions } from 'yup'
 
 interface SchemaValidationInterface {
   [key: string]: {
-    yupSchema: ObjectSchema
+    yupSchema: Shape<any, any>
     validateOptions?: ValidateOptions
   }
 }
