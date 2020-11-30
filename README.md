@@ -59,6 +59,45 @@ app.post('/test', expressYupMiddleware({ schemaValidator }))
 }
 ```
 
+## Using YUP validation options
+
+You can provide options to the property you are validating by using the `validateOptions` property. 
+
+YUP default configuration aborts early after a validation error. As you can see in the following example, you can change this configuration by sending `abortEarly: false` to the `validateOptions` property. There are [other options available](https://github.com/jquense/yup#mixedvalidatevalue-any-options-object-promiseany-validationerror).
+
+```ts
+const schemaValidator: ExpressYupMiddlewareInterface = {
+      schema: {
+        body: {
+          yupSchema: Yup.object().shape({
+            firstTestBodyProperty: Yup.string().required('requiredFirstTestBodyProperty'),
+            secondTestBodyProperty: Yup.string().required('requiredSecondTestBodyProperty'),
+          }),
+          validateOptions: {
+            abortEarly: false,
+          },
+        },
+      },
+    }
+```
+
+```json
+{
+  "errors": {
+    "body": [
+      {
+        "message": "requiredFirstTestBodyProperty",
+        "propertyPath": "firstTestBodyProperty"
+      },
+      {
+        "message": "requiredSecondTestBodyProperty",
+        "propertyPath": "secondTestBodyProperty"
+      }
+    ]
+  }
+}
+```
+
 ## Setting custom error messages
 
 Make sure the key in the Yup schema (requiredTestBodyProperty) matches the property name in the error messages object.
