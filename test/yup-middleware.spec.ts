@@ -127,6 +127,52 @@ describe('express yup middleware', () => {
     })
   })
 
+  describe('using yup validation option', () => {
+    describe('abort early', () => {
+      const schemaValidator: ExpressYupMiddlewareInterface = {
+        schema: {
+          body: {
+            yupSchema: Yup.object().shape({
+              firstTestBodyProperty: Yup.string().required('requiredFirstTestBodyProperty'),
+              secondTestBodyProperty: Yup.string().required('requiredSecondTestBodyProperty'),
+            }),
+            validateOptions: {
+              abortEarly: false,
+            },
+          },
+        },
+      }
+
+      beforeEach(() => {
+        const app = createAppWithPath({
+          path: '/test',
+          middleware: expressYupMiddleware({ schemaValidator }),
+        })
+
+        agent = request(app)
+      })
+
+      it('returns an array with all the errors when validating multiple error messages on the body', async () => {
+        const { body } = await agent.get('/test').expect(400)
+
+        expect(body).toStrictEqual({
+          errors: {
+            body: [
+              {
+                message: 'requiredFirstTestBodyProperty',
+                propertyPath: 'firstTestBodyProperty',
+              },
+              {
+                message: 'requiredSecondTestBodyProperty',
+                propertyPath: 'secondTestBodyProperty',
+              },
+            ],
+          },
+        })
+      })
+    })
+  })
+
   describe('when validating a custom request property', () => {
     const schemaValidator: ExpressYupMiddlewareInterface = {
       schema: {
