@@ -127,48 +127,48 @@ describe('express yup middleware', () => {
     })
   })
 
-  describe('using yup validation options', () => {
-    const schemaValidator: ExpressYupMiddlewareInterface = {
-      schema: {
-        body: {
-          yupSchema: Yup.object().shape({
-            firstTestBodyProperty: Yup.string().required('requiredFirstTestBodyProperty'),
-            secondTestBodyProperty: Yup.string().required('requiredSecondTestBodyProperty'),
-          }),
-          validateOptions: {
-            abortEarly: false,
+  describe('using yup validation option', () => {
+    describe('abort early', () => {
+      const schemaValidator: ExpressYupMiddlewareInterface = {
+        schema: {
+          body: {
+            yupSchema: Yup.object().shape({
+              firstTestBodyProperty: Yup.string().required('requiredFirstTestBodyProperty'),
+              secondTestBodyProperty: Yup.string().required('requiredSecondTestBodyProperty'),
+            }),
+            validateOptions: {
+              abortEarly: false,
+            },
           },
         },
-      },
-    }
+      }
 
-    beforeEach(() => {
-      const app = createAppWithPath({
-        path: '/test',
-        middleware: expressYupMiddleware({ schemaValidator }),
+      beforeEach(() => {
+        const app = createAppWithPath({
+          path: '/test',
+          middleware: expressYupMiddleware({ schemaValidator }),
+        })
+
+        agent = request(app)
       })
 
-      agent = request(app)
-    })
+      it('returns an array with all the errors when validating multiple error messages on the body', async () => {
+        const { body } = await agent.get('/test').expect(400)
 
-    it('returns an array with all the errors when validating multiple error messages on the same property', async () => {
-      const { body } = await agent.get('/test').expect(400)
-
-      console.log(`body`, JSON.stringify(body, null, 2))
-
-      expect(body).toStrictEqual({
-        errors: {
-          body: [
-            {
-              message: 'requiredFirstTestBodyProperty',
-              propertyPath: 'firstTestBodyProperty',
-            },
-            {
-              message: 'requiredSecondTestBodyProperty',
-              propertyPath: 'secondTestBodyProperty',
-            },
-          ],
-        },
+        expect(body).toStrictEqual({
+          errors: {
+            body: [
+              {
+                message: 'requiredFirstTestBodyProperty',
+                propertyPath: 'firstTestBodyProperty',
+              },
+              {
+                message: 'requiredSecondTestBodyProperty',
+                propertyPath: 'secondTestBodyProperty',
+              },
+            ],
+          },
+        })
       })
     })
   })
