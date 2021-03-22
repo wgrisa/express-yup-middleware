@@ -13,7 +13,7 @@ export const expressYupMiddleware = ({
 }: {
   schemaValidator: ExpressYupMiddlewareInterface
   expectedStatusCode?: number
-  propertiesToValidate?: string[]
+  propertiesToValidate?
 }) => async (req: Request, res: Response, next: NextFunction) => {
   const errors = await validatePayload({
     schemaValidator,

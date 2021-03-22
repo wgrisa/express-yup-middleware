@@ -1,8 +1,9 @@
-import { Shape, ValidateOptions } from 'yup'
+import { AnySchema } from 'yup'
+import { ValidateOptions } from 'yup/lib/types'
 
 export interface SchemaWithOptions {
   /** The schema to use to validate */
-  yupSchema: Shape<any, any>
+  yupSchema: AnySchema
   /** Options to validate the schema with */
   validateOptions?: ValidateOptions
 }
@@ -22,8 +23,6 @@ export type SchemaValidationAreas<T> = {
   headers?: T
 }
 
-export type SchemaValidationInterface = SchemaValidationAreas<SchemaWithOptions>
-
 export interface ErrorMessages {
   [key: string]: {
     key: string
@@ -32,6 +31,6 @@ export interface ErrorMessages {
 }
 
 export interface ExpressYupMiddlewareInterface {
-  schema: SchemaValidationInterface
+  schema: SchemaValidationAreas<SchemaWithOptions>
   errorMessages?: ErrorMessages
 }

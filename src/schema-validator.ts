@@ -9,7 +9,7 @@ export const validatePayload = async ({
 }: {
   schemaValidator: ExpressYupMiddlewareInterface
   payload: any
-  propertiesToValidate: string[]
+  propertiesToValidate: (keyof ExpressYupMiddlewareInterface['schema'])[]
 }) => {
   const errors = {}
 
