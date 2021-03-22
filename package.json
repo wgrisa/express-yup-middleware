@@ -9,6 +9,7 @@
   "scripts": {
     "test": "jest",
     "build": "tsc",
+    "prepare": "npm run build",
     "test-watch": "jest --watchAll",
     "lint": "eslint ./src --ext .ts",
     "prepublishOnly": "npm run test && npm run lint && npm run build"
