@@ -3,7 +3,8 @@ import { Shape, ValidateOptions } from 'yup'
 interface SchemaValidationInterface {
   [key: string]: {
     yupSchema: Shape<any, any>
-    validateOptions?: ValidateOptions
+    validateOptions?: ValidateOptions,
+    overrideProperty: boolean
   }
 }
 
