@@ -1,5 +1,5 @@
 import bodyParser from 'body-parser'
-import express from 'express'
+import express, { Request, Response } from 'express'
 import request from 'supertest'
 import * as Yup from 'yup'
 
@@ -11,7 +11,7 @@ const createAppWithPath = ({ path, middleware, method = 'get' }) => {
 
   app.use(bodyParser.json())
 
-  app[method](path, middleware, (req, res) => res.sendStatus(200))
+  app[method](path, middleware, (_req: Request, res: Response) => res.sendStatus(200))
 
   return app
 }
@@ -246,7 +246,7 @@ describe('express yup middleware', () => {
   })
 
   describe('when using the request as an Yup context to cross validate', () => {
-    const shouldBeOfTypeAccoringTo = (source) =>
+    const shouldBeOfTypeAccordingTo = (source) =>
       function shouldBeEven(this: Yup.TestContext, numberToValidate: any) {
         const mod = numberToValidate % 2
         const type = this.options.context['payload'][source].type
@@ -268,7 +268,7 @@ describe('express yup middleware', () => {
             yupSchema: Yup.object().shape({
               numberToValidate: Yup.string().test({
                 message: 'Check if your number correspond with the type given',
-                test: shouldBeOfTypeAccoringTo('query'),
+                test: shouldBeOfTypeAccordingTo('query'),
               }),
             }),
           },
