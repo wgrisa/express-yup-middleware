@@ -9,5 +9,5 @@
     "esModuleInterop": true,
     "declaration": true
   },
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "src/express-yup-middleware.spec.ts", "jest.config.ts"]
 }
