@@ -2,15 +2,10 @@
 # Ignore these directories
 ###############################################################################
 src
-test
 
 ###############################################################################
 # Ignore these files
 ###############################################################################
-.editorconfig
-.eslintrc.json
-.gitignore
-.prettierrc
-jest.config.js
+.*
+jest.config.ts
 tsconfig.json
-eslint.json
