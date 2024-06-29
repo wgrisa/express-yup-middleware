@@ -20,7 +20,7 @@
   "bugs": "https://github.com/wgrisa/express-yup-middleware/issues",
   "dependencies": {
     "express": "^4.17.3",
-    "yup": "^0.28.3"
+    "yup": "^0.32.11"
   },
   "devDependencies": {
     "@jest/types": "^27.5.1",
