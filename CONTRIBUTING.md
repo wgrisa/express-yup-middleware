@@ -12,7 +12,6 @@ Thank you for considering contributing to `express-yup-middleware`! We welcome a
 3. [Development Setup](#development-setup)
 4. [Style Guides](#style-guides)
     - [Git Commit Messages](#git-commit-messages)
-    - [JavaScript Style Guide](#javascript-style-guide)
 5. [Additional Notes](#additional-notes)
 
 ## Code of Conduct
@@ -56,6 +55,19 @@ To set up your development environment:
 1. Fork and clone the repository.
 2. Navigate to the project directory.
 3. Install dependencies using `yarn`.
+
+## Style Guides
+
+### Git Commit Messages
+1. Use the present tense ("Add feature" not "Added feature").
+1. Use the imperative mood ("Move cursor to..." not "Moves cursor to...").
+1. Limit the first line to 72 characters or less.
+1. Reference issues and pull requests liberally.
+1. Consider including links to relevant issues, documentation, or discussions.
+
+## Additional Notes
+We appreciate your effort in making this project better and your contribution is valuable.
+If you need any help or have questions, feel free to open an issue for support.
 
 ### Running Tests
 
