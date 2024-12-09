@@ -19,7 +19,7 @@
   },
   "bugs": "https://github.com/wgrisa/express-yup-middleware/issues",
   "dependencies": {
-    "express": "^4.17.3",
+    "express": "^4.21.2",
     "yup": "^0.28.3"
   },
   "devDependencies": {
