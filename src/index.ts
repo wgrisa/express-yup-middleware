@@ -5,4 +5,4 @@ export {
   ValidationError,
   ValidationResult,
 } from './schema-validation-interface'
-export { validatePayload } from './schema-validator'
+export { ValidatePayloadResult, validatePayload } from './schema-validator'

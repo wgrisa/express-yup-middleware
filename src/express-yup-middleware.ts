@@ -14,6 +14,8 @@ export interface ExpressYupMiddlewareOptions {
   errorFormatter?: (errors: ValidationResult) => any
   continueOnError?: boolean
   customContextKey?: string
+  storeValidatedData?: boolean
+  validatedDataKey?: string
 }
 
 export const expressYupMiddleware =
@@ -24,13 +26,21 @@ export const expressYupMiddleware =
     errorFormatter,
     continueOnError = false,
     customContextKey,
+    storeValidatedData = false,
+    validatedDataKey = 'validated',
   }: ExpressYupMiddlewareOptions) =>
   async (req: Request, res: Response, next: NextFunction) => {
-    const errors = await validatePayload({
+    const { errors, validatedData } = await validatePayload({
       schemaValidator,
       payload: req,
       propertiesToValidate,
+      returnValidatedData: storeValidatedData,
     })
+
+    // Store validated data in request object if storeValidatedData is true
+    if (storeValidatedData && validatedData) {
+      req[validatedDataKey] = validatedData
+    }
 
     if (!errors) {
       return next()

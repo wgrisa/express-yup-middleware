@@ -1,5 +1,5 @@
 import * as Yup from 'yup'
-import { ValidationError } from 'yup'
+import { ValidationError as YupValidationError } from 'yup'
 import { ExpressYupMiddlewareInterface } from './schema-validation-interface'
 import { validatePayload } from './schema-validator'
 
@@ -11,14 +11,14 @@ describe('schema-validator', () => {
         schema: {
           body: {
             yupSchema: Yup.object().shape({
-              name: Yup.string().required(),
+              name: Yup.string(),
             }),
           },
         },
       }
       const payload = {
         body: {
-          name: 'John Doe',
+          name: 'test',
         },
       }
 
@@ -30,7 +30,7 @@ describe('schema-validator', () => {
       })
 
       // Assert
-      expect(result).toBeNull()
+      expect(result.errors).toBeNull()
     })
 
     it('should return validation errors when validation fails', async () => {
@@ -56,10 +56,10 @@ describe('schema-validator', () => {
       })
 
       // Assert
-      expect(result).not.toBeNull()
-      expect(result).toHaveProperty('body')
-      expect(result?.body[0]).toHaveProperty('propertyPath', 'name')
-      expect(result?.body[0]).toHaveProperty('message', 'nameRequired')
+      expect(result.errors).not.toBeNull()
+      expect(result.errors).toHaveProperty('body')
+      expect(result.errors?.body[0]).toHaveProperty('propertyPath', 'name')
+      expect(result.errors?.body[0]).toHaveProperty('message', 'nameRequired')
     })
 
     it('should skip validation if schema for property is not defined', async () => {
@@ -68,26 +68,24 @@ describe('schema-validator', () => {
         schema: {
           body: {
             yupSchema: Yup.object().shape({
-              name: Yup.string().required(),
+              name: Yup.string().required('nameRequired'),
             }),
           },
         },
       }
       const payload = {
-        query: {
-          search: '',
-        },
+        notDefinedProperty: {},
       }
 
       // Act
       const result = await validatePayload({
         schemaValidator,
         payload,
-        propertiesToValidate: ['query'],
+        propertiesToValidate: ['notDefinedProperty'],
       })
 
       // Assert
-      expect(result).toBeNull()
+      expect(result.errors).toBeNull()
     })
 
     it('should validate multiple properties', async () => {
@@ -119,11 +117,11 @@ describe('schema-validator', () => {
       })
 
       // Assert
-      expect(result).not.toBeNull()
-      expect(result).toHaveProperty('body')
-      expect(result).toHaveProperty('query')
-      expect(result?.body[0]).toHaveProperty('message', 'nameRequired')
-      expect(result?.query[0]).toHaveProperty('message', 'searchRequired')
+      expect(result.errors).not.toBeNull()
+      expect(result.errors).toHaveProperty('body')
+      expect(result.errors).toHaveProperty('query')
+      expect(result.errors?.body[0]).toHaveProperty('message', 'nameRequired')
+      expect(result.errors?.query[0]).toHaveProperty('message', 'searchRequired')
     })
 
     it('should use custom error messages when provided', async () => {
@@ -155,9 +153,10 @@ describe('schema-validator', () => {
       })
 
       // Assert
-      expect(result).not.toBeNull()
-      expect(result?.body[0]).toHaveProperty('key', 'name-is-required')
-      expect(result?.body[0]).toHaveProperty('message', 'Name is a required field')
+      expect(result.errors).not.toBeNull()
+      expect(result.errors).toHaveProperty('body')
+      expect(result.errors?.body[0]).toHaveProperty('key', 'name-is-required')
+      expect(result.errors?.body[0]).toHaveProperty('message', 'Name is a required field')
     })
 
     it('should use additionalData when provided in error messages', async () => {
@@ -177,6 +176,7 @@ describe('schema-validator', () => {
             additionalData: {
               fieldType: 'string',
               importance: 'high',
+              documentationUrl: 'https://example.com/docs/required-fields',
             },
           },
         },
@@ -193,28 +193,25 @@ describe('schema-validator', () => {
       })
 
       // Assert
-      expect(result).not.toBeNull()
-      expect(result?.body[0]).toHaveProperty('additionalData')
-      expect(result?.body[0].additionalData).toEqual({
+      expect(result.errors).not.toBeNull()
+      expect(result.errors).toHaveProperty('body')
+      expect(result.errors?.body[0]).toHaveProperty('additionalData')
+      expect(result.errors?.body[0].additionalData).toEqual({
         fieldType: 'string',
         importance: 'high',
+        documentationUrl: 'https://example.com/docs/required-fields',
       })
     })
 
     it('should handle validation errors with undefined path', async () => {
       // Arrange
-      const mockValidationError = new ValidationError('validation error', 'invalid value', 'field')
-      mockValidationError.path = undefined // Explicitly set path to undefined
-
-      const mockYupSchema = {
-        validate: jest.fn().mockRejectedValue(mockValidationError),
-      }
-
+      const mockValidate = jest.fn().mockRejectedValue(new YupValidationError('validation error'))
       const schemaValidator: ExpressYupMiddlewareInterface = {
         schema: {
           body: {
-            // @ts-expect-error - We're mocking the Yup schema
-            yupSchema: mockYupSchema,
+            yupSchema: {
+              validate: mockValidate,
+            } as any,
           },
         },
       }
@@ -230,25 +227,24 @@ describe('schema-validator', () => {
       })
 
       // Assert
-      expect(result).not.toBeNull()
-      expect(result?.body[0]).toHaveProperty('propertyPath', 'unknown')
-      expect(result?.body[0]).toHaveProperty('message', 'validation error')
+      expect(result.errors).not.toBeNull()
+      expect(result.errors).toHaveProperty('body')
+      expect(result.errors?.body[0]).toHaveProperty('propertyPath', 'unknown')
+      expect(result.errors?.body[0]).toHaveProperty('message', 'validation error')
     })
 
     it('should handle validation errors with null message', async () => {
       // Arrange
-      const mockValidationError = new ValidationError(null as any, 'invalid value', 'field')
-      mockValidationError.path = 'fieldName'
-
-      const mockYupSchema = {
-        validate: jest.fn().mockRejectedValue(mockValidationError),
-      }
-
+      const error = new YupValidationError('Original message')
+      error.path = 'fieldName'
+      error.message = null as any
+      const mockValidate = jest.fn().mockRejectedValue(error)
       const schemaValidator: ExpressYupMiddlewareInterface = {
         schema: {
           body: {
-            // @ts-expect-error - We're mocking the Yup schema
-            yupSchema: mockYupSchema,
+            yupSchema: {
+              validate: mockValidate,
+            } as any,
           },
         },
       }
@@ -264,33 +260,26 @@ describe('schema-validator', () => {
       })
 
       // Assert
-      expect(result).not.toBeNull()
-      expect(result?.body[0]).toHaveProperty('propertyPath', 'fieldName')
-      expect(result?.body[0]).toHaveProperty('message', 'Validation error')
+      expect(result.errors).not.toBeNull()
+      expect(result.errors).toHaveProperty('body')
+      expect(result.errors?.body[0]).toHaveProperty('propertyPath', 'fieldName')
+      expect(result.errors?.body[0]).toHaveProperty('message', 'Validation error')
     })
 
     it('should handle inner validation errors', async () => {
       // Arrange
-      const mockValidationError = new ValidationError('outer error', 'invalid value', 'field')
-      mockValidationError.path = 'outerField'
-
-      const innerError1 = new ValidationError('inner error 1', 'invalid value', 'field')
-      innerError1.path = 'innerField1'
-
-      const innerError2 = new ValidationError('inner error 2', 'invalid value', 'field')
-      innerError2.path = 'innerField2'
-
-      mockValidationError.inner = [innerError1, innerError2]
-
-      const mockYupSchema = {
-        validate: jest.fn().mockRejectedValue(mockValidationError),
-      }
-
+      const error = new YupValidationError('Parent error')
+      error.inner = [
+        Object.assign(new YupValidationError('inner error 1'), { path: 'innerField1' }),
+        Object.assign(new YupValidationError('inner error 2'), { path: 'innerField2' }),
+      ]
+      const mockValidate = jest.fn().mockRejectedValue(error)
       const schemaValidator: ExpressYupMiddlewareInterface = {
         schema: {
           body: {
-            // @ts-expect-error - We're mocking the Yup schema
-            yupSchema: mockYupSchema,
+            yupSchema: {
+              validate: mockValidate,
+            } as any,
           },
         },
       }
@@ -306,35 +295,29 @@ describe('schema-validator', () => {
       })
 
       // Assert
-      expect(result).not.toBeNull()
-      expect(result?.body).toHaveLength(2)
-      expect(result?.body[0]).toHaveProperty('propertyPath', 'innerField1')
-      expect(result?.body[0]).toHaveProperty('message', 'inner error 1')
-      expect(result?.body[1]).toHaveProperty('propertyPath', 'innerField2')
-      expect(result?.body[1]).toHaveProperty('message', 'inner error 2')
+      expect(result.errors).not.toBeNull()
+      expect(result.errors).toHaveProperty('body')
+      expect(result.errors?.body).toHaveLength(2)
+      expect(result.errors?.body[0]).toHaveProperty('propertyPath', 'innerField1')
+      expect(result.errors?.body[0]).toHaveProperty('message', 'inner error 1')
+      expect(result.errors?.body[1]).toHaveProperty('propertyPath', 'innerField2')
+      expect(result.errors?.body[1]).toHaveProperty('message', 'inner error 2')
     })
 
     it('should avoid duplicate errors for the same property path', async () => {
       // Arrange
-      const mockValidationError = new ValidationError('outer error', 'invalid value', 'field')
-
-      const innerError1 = new ValidationError('inner error 1', 'invalid value', 'field')
-      innerError1.path = 'innerField'
-
-      const innerError2 = new ValidationError('inner error 2', 'invalid value', 'field')
-      innerError2.path = 'innerField' // Same property path as innerError1
-
-      mockValidationError.inner = [innerError1, innerError2]
-
-      const mockYupSchema = {
-        validate: jest.fn().mockRejectedValue(mockValidationError),
-      }
-
+      const error = new YupValidationError('Parent error')
+      error.inner = [
+        Object.assign(new YupValidationError('inner error 1'), { path: 'innerField' }),
+        Object.assign(new YupValidationError('inner error 2'), { path: 'innerField' }), // Duplicate path
+      ]
+      const mockValidate = jest.fn().mockRejectedValue(error)
       const schemaValidator: ExpressYupMiddlewareInterface = {
         schema: {
           body: {
-            // @ts-expect-error - We're mocking the Yup schema
-            yupSchema: mockYupSchema,
+            yupSchema: {
+              validate: mockValidate,
+            } as any,
           },
         },
       }
@@ -350,10 +333,70 @@ describe('schema-validator', () => {
       })
 
       // Assert
-      expect(result).not.toBeNull()
-      expect(result?.body).toHaveLength(1)
-      expect(result?.body[0]).toHaveProperty('propertyPath', 'innerField')
-      expect(result?.body[0]).toHaveProperty('message', 'inner error 1')
+      expect(result.errors).not.toBeNull()
+      expect(result.errors).toHaveProperty('body')
+      expect(result.errors?.body).toHaveLength(1)
+      expect(result.errors?.body[0]).toHaveProperty('propertyPath', 'innerField')
+      expect(result.errors?.body[0]).toHaveProperty('message', 'inner error 1')
+    })
+
+    it('should return validated data when returnValidatedData is true', async () => {
+      // Arrange
+      const validData = { name: 'test' }
+      const schemaValidator: ExpressYupMiddlewareInterface = {
+        schema: {
+          body: {
+            yupSchema: Yup.object().shape({
+              name: Yup.string().required(),
+            }),
+          },
+        },
+      }
+      const payload = {
+        body: validData,
+      }
+
+      // Act
+      const result = await validatePayload({
+        schemaValidator,
+        payload,
+        propertiesToValidate: ['body'],
+        returnValidatedData: true,
+      })
+
+      // Assert
+      expect(result.errors).toBeNull()
+      expect(result.validatedData).toBeDefined()
+      expect(result.validatedData?.body).toEqual(validData)
+    })
+
+    it('should not return validated data when returnValidatedData is false', async () => {
+      // Arrange
+      const validData = { name: 'test' }
+      const schemaValidator: ExpressYupMiddlewareInterface = {
+        schema: {
+          body: {
+            yupSchema: Yup.object().shape({
+              name: Yup.string().required(),
+            }),
+          },
+        },
+      }
+      const payload = {
+        body: validData,
+      }
+
+      // Act
+      const result = await validatePayload({
+        schemaValidator,
+        payload,
+        propertiesToValidate: ['body'],
+        returnValidatedData: false,
+      })
+
+      // Assert
+      expect(result.errors).toBeNull()
+      expect(result.validatedData).toBeUndefined()
     })
   })
 })
