@@ -1,6 +1,6 @@
 {
   "name": "express-yup-middleware",
-  "version": "1.2.4",
+  "version": "2.0.0",
   "description": "express-yup-middleware is an express middleware that uses Yup schemas to validate a request and return a response with errors.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,9 +9,11 @@
   "scripts": {
     "lint": "eslint . --ext .ts",
     "test": "jest",
-    "test-watch": "jest --watchAll",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watchAll",
+    "test:ci": "jest --ci --coverage",
     "build": "tsc",
-    "prepublishOnly": "yarn lint && yarn test && yarn build"
+    "prepublishOnly": "yarn lint && yarn test:ci && yarn build"
   },
   "repository": {
     "type": "git",
@@ -19,8 +21,8 @@
   },
   "bugs": "https://github.com/wgrisa/express-yup-middleware/issues",
   "dependencies": {
-    "express": "^4.17.3",
-    "yup": "^0.28.3"
+    "express": "^4.18.2",
+    "yup": "^1.3.2"
   },
   "devDependencies": {
     "@jest/types": "^27.5.1",

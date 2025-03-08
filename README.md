@@ -61,24 +61,24 @@ app.post('/test', expressYupMiddleware({ schemaValidator }))
 
 ## Using YUP validation options
 
-You can provide options to the property you are validating by using the `validateOptions` property. 
+You can provide options to the property you are validating by using the `validateOptions` property.
 
 YUP default configuration aborts early after a validation error. As you can see in the following example, you can change this configuration by sending `abortEarly: false` to the `validateOptions` property. There are [other options available](https://github.com/jquense/yup#mixedvalidatevalue-any-options-object-promiseany-validationerror).
 
 ```ts
 const schemaValidator: ExpressYupMiddlewareInterface = {
-      schema: {
-        body: {
-          yupSchema: Yup.object().shape({
-            firstTestBodyProperty: Yup.string().required('requiredFirstTestBodyProperty'),
-            secondTestBodyProperty: Yup.string().required('requiredSecondTestBodyProperty'),
-          }),
-          validateOptions: {
-            abortEarly: false,
-          },
-        },
+  schema: {
+    body: {
+      yupSchema: Yup.object().shape({
+        firstTestBodyProperty: Yup.string().required('requiredFirstTestBodyProperty'),
+        secondTestBodyProperty: Yup.string().required('requiredSecondTestBodyProperty'),
+      }),
+      validateOptions: {
+        abortEarly: false,
       },
-    }
+    },
+  },
+}
 ```
 
 ```json
@@ -211,3 +211,104 @@ Adding the `expectedStatusCode` option, your will receive the given status code 
 ```ts
 app.post('/test', expressYupMiddleware({ schemaValidator, expectedStatusCode: 418 }))
 ```
+
+## New Features in Version 2.0.0
+
+### Continue on Error
+
+You can now configure the middleware to continue processing the request even if validation fails. This is useful when you want to validate the request but still allow it to proceed, storing the validation errors for later use.
+
+```ts
+app.post(
+  '/test',
+  expressYupMiddleware({
+    schemaValidator,
+    continueOnError: true,
+    customContextKey: 'myValidationErrors', // optional, default is 'validationErrors'
+  }),
+)
+
+// Later in your route handler
+app.post('/test', (req, res) => {
+  const validationErrors = req.myValidationErrors
+  // Do something with validation errors
+})
+```
+
+### Custom Error Formatter
+
+You can provide a custom error formatter to change the format of the error response:
+
+```ts
+app.post(
+  '/test',
+  expressYupMiddleware({
+    schemaValidator,
+    errorFormatter: (errors) => ({
+      status: 'error',
+      validationErrors: errors,
+      timestamp: new Date(),
+    }),
+  }),
+)
+```
+
+### TypeScript Improvements
+
+The package now includes improved TypeScript types for better developer experience:
+
+```ts
+import {
+  expressYupMiddleware,
+  ValidationError,
+  ValidationResult,
+  ExpressYupMiddlewareOptions,
+} from 'express-yup-middleware'
+
+// Use the types in your code
+const errorFormatter = (errors: ValidationResult) => {
+  // Custom formatting
+}
+
+const options: ExpressYupMiddlewareOptions = {
+  schemaValidator,
+  errorFormatter,
+}
+```
+
+### Additional Data in Error Messages
+
+You can now include additional data in your error messages:
+
+```ts
+const schemaValidator = {
+  schema: {
+    body: {
+      yupSchema: Yup.object().shape({
+        testBodyProperty: Yup.string().required('requiredTestBodyProperty'),
+      }),
+    },
+  },
+  errorMessages: {
+    requiredTestBodyProperty: {
+      key: 'test-property-required',
+      message: 'The property is required!',
+      additionalData: {
+        fieldType: 'string',
+        importance: 'high',
+        documentationUrl: 'https://example.com/docs/required-fields',
+      },
+    },
+  },
+}
+```
+
+## Documentation
+
+- [CHANGELOG](CHANGELOG.md) - Details about each release
+- [MIGRATION GUIDE](MIGRATION.md) - Guide for migrating from v1.x to v2.0.0
+- [PUBLISHING](PUBLISHING.md) - Guide for maintainers on how to publish new releases
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request or open an Issue for discussion.
