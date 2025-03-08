@@ -1,0 +1,12 @@
+# Build output
+dist/
+
+# Node modules
+node_modules/
+
+# Coverage directory
+coverage/
+
+# Misc
+.DS_Store
+*.log

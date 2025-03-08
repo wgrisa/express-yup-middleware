@@ -32,6 +32,7 @@ This document outlines the steps required to publish a new version of `express-y
 ### 4. Build & Publish
 
 - Run `yarn build` to build the package (generates the dist folder)
+  - Note: The dist folder is automatically ignored by ESLint via .eslintignore
 - Run `npm publish` to publish to npm registry
   - Note: The `prepublishOnly` script will automatically run lint, tests, and build before publishing
 - If you're publishing a pre-release version, use `npm publish --tag beta` (or another appropriate tag)
