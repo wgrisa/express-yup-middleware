@@ -7,16 +7,24 @@ import {
   ValidationResult,
 } from './schema-validation-interface'
 
+export interface ValidatePayloadResult {
+  errors: ValidationResult
+  validatedData?: Record<string, any>
+}
+
 export const validatePayload = async ({
   schemaValidator,
   payload,
   propertiesToValidate,
+  returnValidatedData = false,
 }: {
   schemaValidator: ExpressYupMiddlewareInterface
   payload: any
   propertiesToValidate: string[]
-}): Promise<ValidationResult> => {
+  returnValidatedData?: boolean
+}): Promise<ValidatePayloadResult> => {
   const errors: Record<string, ValidationError[]> = {}
+  const validatedData: Record<string, any> = returnValidatedData ? {} : undefined
 
   for (const propertyToValidate of propertiesToValidate) {
     const propertySchema = schemaValidator.schema[propertyToValidate]
@@ -26,13 +34,18 @@ export const validatePayload = async ({
     }
 
     try {
-      await propertySchema.yupSchema.validate(payload[propertyToValidate], {
+      const validatedProperty = await propertySchema.yupSchema.validate(payload[propertyToValidate], {
         ...propertySchema.validateOptions,
         context: {
           payload,
           ...propertySchema.validateOptions?.context,
         },
       })
+
+      // Store validated data if requested
+      if (returnValidatedData) {
+        validatedData[propertyToValidate] = validatedProperty
+      }
     } catch (error) {
       const yupValidationError = error as YupValidationError
       errors[propertyToValidate] = buildErrorPayload({
@@ -42,7 +55,10 @@ export const validatePayload = async ({
     }
   }
 
-  return Object.keys(errors).length ? errors : null
+  return {
+    errors: Object.keys(errors).length ? errors : null,
+    validatedData: returnValidatedData ? validatedData : undefined,
+  }
 }
 
 const buildErrorPayload = ({

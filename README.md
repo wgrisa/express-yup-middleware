@@ -303,6 +303,41 @@ const schemaValidator = {
 }
 ```
 
+## Accessing validated data in request handlers
+
+You can store the validated and typed objects in the request for use in your handlers:
+
+```ts
+const schemaValidator = {
+  schema: {
+    body: {
+      yupSchema: Yup.object().shape({
+        email: Yup.string().email().required(),
+        password: Yup.string().min(8).required(),
+      }),
+    },
+  },
+}
+
+app.post(
+  '/login',
+  expressYupMiddleware({
+    schemaValidator,
+    storeValidatedData: true, // Enable storing validated data
+    validatedDataKey: 'validated', // Optional: customize the property name (default is 'validated')
+  }),
+  (req, res) => {
+    // Access the validated data with proper types
+    const { email, password } = req.validated.body
+
+    // Your handler logic here
+    // ...
+  },
+)
+```
+
+This feature is particularly useful when working with TypeScript, as it gives you type-safe access to your validated data without having to call `validate()` again in your handler.
+
 ## Documentation
 
 - [CHANGELOG](CHANGELOG.md) - Details about each release
